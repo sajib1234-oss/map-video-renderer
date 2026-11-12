@@ -1,0 +1,10 @@
+{
+  "name": "map-video-cloud-pipeline",
+  "version": "1.0.0",
+  "description": "Cloud headless rendering pipeline for animated map shorts",
+  "main": "render_runner.js",
+  "dependencies": {
+    "puppeteer-core": "^23.8.0",
+    "ws": "^8.18.0"
+  }
+}
