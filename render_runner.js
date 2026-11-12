@@ -25,6 +25,7 @@ if (!fs.existsSync(FRAMES_DIR)) {
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-dev-shm-usage',
+      '--allow-file-access-from-files',
       '--enable-unsafe-swiftshader',
       '--use-gl=swiftshader',
       '--window-size=720,1280'
