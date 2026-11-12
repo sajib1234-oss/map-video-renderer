@@ -1,14 +1,15 @@
 import math
 import os
 import random
+import shutil
 import struct
 import subprocess
 import wave
 
-PROJ = r"C:\Users\user\.gemini\antigravity\scratch\four-corners-map-short"
-FFMPEG = r"C:\Users\user\.gemini\antigravity\scratch\bangla_toon\node_modules\@ffmpeg-installer\win32-x64\ffmpeg.exe"
+PROJ = os.path.dirname(os.path.abspath(__file__))
+FFMPEG = shutil.which("ffmpeg") or "ffmpeg"
 SR = 44100
-TOTAL_DUR = 36.30
+TOTAL_DUR = 36.10
 TOTAL_SAMPLES = int(TOTAL_DUR * SR)
 
 def write_wav(path, samples):
@@ -26,10 +27,11 @@ def read_wav(path):
         int16s = struct.unpack("<" + "h" * n, raw)
         return [s / 32767.0 for s in int16s]
 
-# 1. Cinematic Air Whoosh (0.60s)
+# Procedural SFX Generators
+# 1. Cinematic Air Whoosh (0.55s)
 whoosh = []
-n_w = int(0.60 * SR)
-random.seed(42)
+n_w = int(0.55 * SR)
+random.seed(101)
 lp = 0.0
 for i in range(n_w):
     t = i / SR
@@ -37,50 +39,54 @@ for i in range(n_w):
     cutoff = 0.05 + 0.28 * math.sin(math.pi * (i / n_w))
     white = random.uniform(-1, 1)
     lp = lp + cutoff * (white - lp)
-    sub = 0.32 * math.sin(2 * math.pi * (110 - 55 * (t / 0.60)) * t)
+    sub = 0.30 * math.sin(2 * math.pi * (100 - 50 * (t / 0.55)) * t)
     whoosh.append((lp * 0.85 + sub) * env * 0.45)
 
-# 2. Crisp UI Pop (0.12s)
+# 2. Crisp UI Pop (0.10s)
 pop = []
-n_p = int(0.12 * SR)
+n_p = int(0.10 * SR)
 for i in range(n_p):
     t = i / SR
-    env = math.exp(-t * 42)
-    freq = 780 - 450 * (t / 0.12)
-    pop.append((0.75 * math.sin(2 * math.pi * freq * t) + 0.25 * math.sin(2 * math.pi * freq * 2.0 * t)) * env * 0.55)
+    env = math.exp(-t * 45)
+    freq = 820 - 480 * (t / 0.10)
+    pop.append((0.75 * math.sin(2 * math.pi * freq * t) + 0.25 * math.sin(2 * math.pi * freq * 2.0 * t)) * env * 0.50)
 
-# 3. Soft UI Tick (0.08s)
-tick = []
-n_tk = int(0.08 * SR)
-for i in range(n_tk):
+# 3. Deep Cinematic Bass Impact / Boom (0.80s)
+boom = []
+n_b = int(0.80 * SR)
+for i in range(n_b):
     t = i / SR
-    env = math.exp(-t * 60)
-    freq = 1100 - 600 * (t / 0.08)
-    tick.append(math.sin(2 * math.pi * freq * t) * env * 0.40)
+    env = min(1.0, t / 0.005) * math.exp(-t * 4.5)
+    freq = 68.0 * math.exp(-t * 2.5)
+    sub = math.sin(2 * math.pi * freq * t)
+    punch = math.sin(2 * math.pi * 140.0 * t) * math.exp(-t * 30.0)
+    boom.append((sub * 0.80 + punch * 0.35) * env * 0.65)
 
-# 4. Glass Chime / Monument Bell (0.65s)
+# 4. Glass Chime / Bell (0.60s)
 chime = []
-n_c = int(0.65 * SR)
+n_c = int(0.60 * SR)
 for i in range(n_c):
     t = i / SR
-    env = min(1.0, t / 0.008) * math.exp(-t * 5.8)
-    val = (0.50 * math.sin(2 * math.pi * 987.77 * t) +
-           0.32 * math.sin(2 * math.pi * 1479.98 * t) +
-           0.18 * math.sin(2 * math.pi * 1975.53 * t))
-    chime.append(val * env * 0.42)
+    env = min(1.0, t / 0.008) * math.exp(-t * 6.0)
+    val = (0.50 * math.sin(2 * math.pi * 1046.50 * t) +
+           0.32 * math.sin(2 * math.pi * 1567.98 * t) +
+           0.18 * math.sin(2 * math.pi * 2093.00 * t))
+    chime.append(val * env * 0.40)
 
-# 5. Lock In / Target Shimmer (0.35s)
-target_lock = []
-n_tl = int(0.35 * SR)
-for i in range(n_tl):
+# 5. Sonar Radar Ping / Coastline Wave (0.70s)
+sonar = []
+n_sn = int(0.70 * SR)
+for i in range(n_sn):
     t = i / SR
-    env = min(1.0, t / 0.01) * math.exp(-t * 11)
-    val = (0.6 * math.sin(2 * math.pi * 1200 * t) + 0.4 * math.sin(2 * math.pi * 1800 * t))
-    target_lock.append(val * env * 0.45)
+    env = min(1.0, t / 0.015) * math.exp(-t * 4.2)
+    carrier = math.sin(2 * math.pi * 1850 * t)
+    mod = math.sin(2 * math.pi * 12 * t)
+    sonar.append(carrier * (0.8 + 0.2 * mod) * env * 0.35)
 
 # Decode voiceover to temporary 44.1kHz mono WAV
 voice_mp3 = os.path.join(PROJ, "voiceover.mp3")
 voice_wav = os.path.join(PROJ, "voiceover_temp.wav")
+print(f"Decoding voiceover {voice_mp3} with ffmpeg ({FFMPEG})...")
 subprocess.run([FFMPEG, "-y", "-i", voice_mp3, "-ar", "44100", "-ac", "1", voice_wav], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 vo_samples = read_wav(voice_wav)
@@ -88,10 +94,10 @@ vo_samples = read_wav(voice_wav)
 # Create master buffer
 master = [0.0] * TOTAL_SAMPLES
 
-# Place voiceover with boost
+# Place voiceover with clarity boost
 for i, s in enumerate(vo_samples):
     if i < TOTAL_SAMPLES:
-        master[i] += s * 1.35
+        master[i] += s * 1.30
 
 def overlay_sfx(sfx_arr, start_sec, vol=1.0):
     start_idx = int(start_sec * SR)
@@ -100,53 +106,38 @@ def overlay_sfx(sfx_arr, start_sec, vol=1.0):
         if 0 <= idx < TOTAL_SAMPLES:
             master[idx] += s * vol
 
-# Add SFX strictly aligned with speech beats (NO BGM!)
-# 1. Whoosh sounds
-for t in [0.20, 7.80, 15.10, 21.90, 32.90]:
-    overlay_sfx(whoosh, t, 0.40)
-
-# 2. Pops on key reveals & state mentions
-overlay_sfx(pop, 2.30, 0.55)   # "four different US states"
-overlay_sfx(pop, 16.68, 0.60)  # "Arizona"
-overlay_sfx(pop, 17.50, 0.60)  # "Utah"
-overlay_sfx(pop, 18.02, 0.60)  # "Colorado"
-overlay_sfx(pop, 18.82, 0.60)  # "New Mexico"
-overlay_sfx(pop, 33.60, 0.55)  # "which state"
-
-# 3. Ticks
-overlay_sfx(tick, 6.20, 0.45)   # "impossible, right?"
-overlay_sfx(tick, 15.50, 0.45)  # "Look at this map"
-overlay_sfx(tick, 26.50, 0.45)  # "four state borders"
-
-# 4. Monument & center chime / locks
-overlay_sfx(chime, 11.80, 0.50) # "Four Corners Monument"
-overlay_sfx(target_lock, 20.50, 0.55) # "one single point"
-overlay_sfx(chime, 28.80, 0.55) # "marker on the ground"
+# Timed SFX placement synced with speech
+overlay_sfx(whoosh, 0.15, vol=0.8)     # Opening zoom
+overlay_sfx(chime, 1.54, vol=0.7)      # "Alaska"
+overlay_sfx(whoosh, 3.50, vol=0.85)    # Pan to Texas
+overlay_sfx(pop, 4.80, vol=0.75)       # "Texas is huge"
+overlay_sfx(boom, 6.66, vol=0.85)      # "makes it look surprisingly small"
+overlay_sfx(chime, 8.64, vol=0.7)      # "Alaska is the largest state"
+overlay_sfx(whoosh, 15.30, vol=0.8)    # "here's where things get crazy"
+overlay_sfx(pop, 19.16, vol=0.8)       # "Texas"
+overlay_sfx(pop, 20.06, vol=0.8)       # "California"
+overlay_sfx(pop, 20.90, vol=0.8)       # "Montana"
+overlay_sfx(boom, 21.30, vol=0.90)     # "combined!"
+overlay_sfx(whoosh, 22.96, vol=0.8)    # "Imagine placing all three states"
+overlay_sfx(chime, 27.26, vol=0.75)    # "still be larger"
+overlay_sfx(sonar, 30.30, vol=0.85)    # "more coastline"
+overlay_sfx(chime, 34.02, vol=0.7)     # "Did you think"
 
 # Soft limiter
-for i in range(TOTAL_SAMPLES):
-    v = master[i]
-    if v > 0.95:
-        master[i] = 0.95 + 0.05 * math.tanh((v - 0.95) / 0.05)
-    elif v < -0.95:
-        master[i] = -0.95 + 0.05 * math.tanh((v + 0.95) / 0.05)
+peak = max(abs(s) for s in master)
+if peak > 0.98:
+    scale = 0.98 / peak
+    master = [s * scale for s in master]
 
-mixed_wav = os.path.join(PROJ, "mixed_master.wav")
-write_wav(mixed_wav, master)
+master_wav = os.path.join(PROJ, "master_audio.wav")
+write_wav(master_wav, master)
 
 final_m4a = os.path.join(PROJ, "final_audio.m4a")
-subprocess.run([
-    FFMPEG, "-y",
-    "-i", mixed_wav,
-    "-c:a", "aac",
-    "-b:a", "192k",
-    "-t", "36.30",
-    final_m4a
-], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+subprocess.run([FFMPEG, "-y", "-i", master_wav, "-c:a", "aac", "-b:a", "192k", final_m4a], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 if os.path.exists(voice_wav):
     os.remove(voice_wav)
-if os.path.exists(mixed_wav):
-    os.remove(mixed_wav)
+if os.path.exists(master_wav):
+    os.remove(master_wav)
 
-print(f"Successfully generated clean voiceover + SFX audio (NO BGM): {final_m4a} ({os.path.getsize(final_m4a)} bytes)")
+print(f"Master audio generated successfully: {final_m4a} ({os.path.getsize(final_m4a)} bytes)")
