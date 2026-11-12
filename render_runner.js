@@ -9,14 +9,24 @@ if (!fs.existsSync(FRAMES_DIR)) {
 
 (async () => {
   console.log('Starting Headless Chromium for cloud rendering...');
+  const candidatePaths = [
+    '/usr/bin/chromium-browser',
+    '/usr/bin/chromium',
+    '/snap/bin/chromium',
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+  ];
+  const execPath = candidatePaths.find(p => fs.existsSync(p)) || '/usr/bin/chromium-browser';
+  console.log('Using browser executable at:', execPath);
+
   const browser = await puppeteer.launch({
-    executablePath: '/usr/bin/chromium-browser',
+    executablePath: execPath,
     headless: 'new',
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-dev-shm-usage',
-      '--disable-gpu',
+      '--enable-unsafe-swiftshader',
+      '--use-gl=swiftshader',
       '--window-size=720,1280'
     ]
   });
