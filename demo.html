@@ -1,1131 +1,565 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Four Corners Monument — Map Explainer Short</title>
-<link href="./maplibre-gl.css" rel="stylesheet" />
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet">
-<script src="./maplibre-gl.js"></script>
-<script src="./states_data.js"></script>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body {
-    width: 720px;
-    height: 1280px;
-    overflow: hidden;
-    background: #060b14;
-    font-family: 'Montserrat', 'Segoe UI', sans-serif;
-    user-select: none;
-  }
-  #map {
-    position: absolute;
-    inset: 0;
-    width: 720px;
-    height: 1280px;
-    filter: contrast(1.08) saturate(1.15) brightness(0.92);
-  }
-  /* Tactile dark vignette & film overlay */
-  #vignette {
-    position: absolute;
-    inset: 0;
-    z-index: 4;
-    pointer-events: none;
-    background:
-      radial-gradient(ellipse at 50% 48%, transparent 45%, rgba(4, 7, 16, 0.78) 100%),
-      linear-gradient(180deg, rgba(4, 7, 16, 0.75) 0%, transparent 16%, transparent 75%, rgba(4, 7, 16, 0.88) 100%);
-  }
-  #overlay {
-    position: absolute;
-    inset: 0;
-    z-index: 12;
-    pointer-events: none;
-  }
+  <meta charset="UTF-8">
+  <title>Alaska Scale Explainer - 9:16 Shorts</title>
+  <link rel="stylesheet" href="maplibre-gl.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 720px;
+      height: 1280px;
+      overflow: hidden;
+      background: #030811;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: #fff;
+      user-select: none;
+    }
+    #map {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0; left: 0;
+    }
 
-  /* Top Stage Header Badge */
-  #stage-badge {
-    position: absolute;
-    top: 55px;
-    left: 50%;
-    transform: translateX(-50%) scale(0.95);
-    background: rgba(11, 18, 32, 0.92);
-    border: 2px solid rgba(251, 191, 36, 0.85);
-    border-radius: 999px;
-    padding: 8px 24px;
-    color: #fef08a;
-    font-size: 19px;
-    font-weight: 800;
-    letter-spacing: 1.1px;
-    text-transform: uppercase;
-    white-space: nowrap;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.7);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
+    /* Cinematic Vignette & Cyber Grid */
+    .vignette {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none;
+      background: radial-gradient(circle at center, transparent 40%, rgba(3, 8, 17, 0.75) 85%, rgba(1, 4, 10, 0.95) 100%);
+      box-shadow: inset 0 0 100px rgba(0,0,0,0.85);
+      z-index: 10;
+    }
 
-  /* Hook Title */
-  #hook-wrap {
-    position: absolute;
-    top: 135px;
-    left: 32px;
-    right: 32px;
-    text-align: center;
-    opacity: 0;
-    transform: translateY(-16px) scale(0.94);
-  }
-  .hook-pill {
-    display: inline-block;
-    font-size: 40px;
-    font-weight: 900;
-    line-height: 1.16;
-    letter-spacing: -0.5px;
-    color: #ffffff;
-    text-transform: uppercase;
-    text-shadow: 0 5px 20px rgba(0,0,0,0.95), 0 0 3px #000;
-  }
-  .hl-mark {
-    position: relative;
-    display: inline-block;
-    padding: 2px 14px;
-    color: #0b1120;
-    text-shadow: none;
-    margin-top: 6px;
-  }
-  .hl-mark-bg {
-    position: absolute;
-    inset: 1px 0;
-    background: #fde047;
-    border-radius: 10px;
-    z-index: -1;
-    transform-origin: left center;
-    box-shadow: 0 6px 24px rgba(253, 224, 71, 0.5);
-  }
+    /* Top Brand Header */
+    .top-header {
+      position: absolute;
+      top: 50px;
+      left: 36px;
+      right: 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 20;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 999px;
+      background: rgba(0, 240, 255, 0.15);
+      border: 1px solid rgba(0, 240, 255, 0.4);
+      backdrop-filter: blur(12px);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #00F0FF;
+    }
+    .badge-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #00F0FF;
+      box-shadow: 0 0 10px #00F0FF;
+      animation: pulse 1.5s infinite alternate;
+    }
+    @keyframes pulse { from { opacity: 0.4; } to { opacity: 1; } }
 
-  /* Floating Info Cards */
-  .floating-card {
-    position: absolute;
-    background: rgba(11, 18, 34, 0.95);
-    border-radius: 20px;
-    padding: 16px 24px;
-    box-shadow: 0 16px 42px rgba(0,0,0,0.85);
-    opacity: 0;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    white-space: nowrap;
-  }
+    /* State Comparison HUD Cards */
+    .hud-card {
+      position: absolute;
+      top: 110px;
+      left: 36px;
+      right: 36px;
+      background: rgba(8, 18, 35, 0.85);
+      border: 1px solid rgba(0, 240, 255, 0.35);
+      border-radius: 20px;
+      padding: 22px 26px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 240, 255, 0.15);
+      z-index: 20;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .hud-title {
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .hud-stat {
+      font-size: 42px;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      color: #00F0FF;
+      text-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+      margin-top: 6px;
+    }
+    .hud-sub {
+      font-size: 15px;
+      color: #A0B2C6;
+      margin-top: 4px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
 
-  #four-states-pill {
-    top: 250px;
-    left: 50%;
-    transform: translateX(-50%) scale(0.9);
-    border: 2px solid #38bdf8;
-  }
-  .pill-dots {
-    display: flex;
-    gap: 6px;
-  }
-  .dot {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    box-shadow: 0 0 10px currentColor;
-  }
+    /* Comparison Bar Stack */
+    .comp-box {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      display: none;
+    }
+    .comp-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .comp-bar-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .bar-label { width: 90px; }
+    .bar-track {
+      flex: 1;
+      height: 14px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 7px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 7px;
+      transition: width 0.3s ease;
+    }
 
-  #zero-step-pill {
-    top: 325px;
-    left: 50%;
-    transform: translateX(-50%) scale(0.9);
-    border: 2px solid #f87171;
-  }
+    /* Big Callout Pill in Center */
+    .callout-pill {
+      position: absolute;
+      top: 520px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.88);
+      border: 2px solid #FFE600;
+      border-radius: 16px;
+      padding: 16px 28px;
+      font-size: 26px;
+      font-weight: 900;
+      color: #FFE600;
+      box-shadow: 0 0 35px rgba(255, 230, 0, 0.4);
+      z-index: 25;
+      text-align: center;
+      display: none;
+      white-space: nowrap;
+    }
 
-  #impossible-badge {
-    position: absolute;
-    top: 240px;
-    left: 50%;
-    transform: translateX(-50%) scale(0.85);
-    background: rgba(153, 27, 27, 0.95);
-    border: 3px solid #fca5a5;
-    border-radius: 999px;
-    padding: 12px 30px;
-    font-size: 26px;
-    font-weight: 900;
-    color: #ffffff;
-    box-shadow: 0 0 40px rgba(239, 68, 68, 0.7);
-    opacity: 0;
-  }
+    /* Coastline Stat Card */
+    .coast-card {
+      position: absolute;
+      top: 110px;
+      left: 36px;
+      right: 36px;
+      background: rgba(5, 25, 45, 0.90);
+      border: 1px solid #00F0FF;
+      border-radius: 20px;
+      padding: 22px 26px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 0 40px rgba(0, 240, 255, 0.3);
+      z-index: 20;
+      display: none;
+    }
 
-  /* Map Pin Components */
-  .map-pin {
-    position: absolute;
-    transform: translate(-50%, -100%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    opacity: 0;
-  }
-  .pin-chip {
-    background: rgba(11, 18, 34, 0.96);
-    border: 2.5px solid #fbbf24;
-    color: #fff;
-    padding: 8px 16px;
-    border-radius: 12px;
-    font-size: 21px;
-    font-weight: 800;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
-    box-shadow: 0 10px 28px rgba(0,0,0,0.8);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .pin-stem {
-    width: 3px;
-    height: 16px;
-    background: #fbbf24;
-  }
-  .pin-dot {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: #fbbf24;
-    border: 3px solid #fff;
-    box-shadow: 0 0 16px rgba(251, 191, 36, 0.95);
-  }
+    /* Interactive Outro Poll */
+    .outro-poll {
+      position: absolute;
+      bottom: 240px;
+      left: 36px;
+      right: 36px;
+      background: rgba(10, 20, 38, 0.95);
+      border: 1.5px solid rgba(0, 240, 255, 0.5);
+      border-radius: 24px;
+      padding: 24px 28px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 40px rgba(0,240,255,0.25);
+      z-index: 28;
+      display: none;
+      animation: slideUp 0.4s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(40px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .poll-q {
+      font-size: 24px;
+      font-weight: 900;
+      text-align: center;
+      margin-bottom: 16px;
+      color: #FFF;
+    }
+    .poll-opt {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 18px;
+      margin-bottom: 10px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.08);
+      font-size: 17px;
+      font-weight: 700;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .poll-opt.winner {
+      background: rgba(0, 240, 255, 0.2);
+      border-color: #00F0FF;
+      color: #00F0FF;
+    }
 
-  /* Center Quad Crosshair */
-  #center-crosshair {
-    position: absolute;
-    width: 80px;
-    height: 80px;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-    opacity: 0;
-  }
-
-  /* State Callout Badges */
-  .state-badge {
-    position: absolute;
-    transform: translate(-50%, -50%);
-    padding: 8px 18px;
-    border-radius: 14px;
-    background: rgba(10, 16, 30, 0.95);
-    font-size: 20px;
-    font-weight: 800;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    box-shadow: 0 12px 32px rgba(0,0,0,0.85);
-    opacity: 0;
-  }
-
-  /* Feature Info Card (Beat 4) */
-  #quad-feature-card {
-    left: 36px;
-    right: 36px;
-    top: 145px;
-    position: absolute;
-    background: rgba(10, 17, 32, 0.96);
-    border: 2.5px solid #38bdf8;
-    border-radius: 22px;
-    padding: 22px 24px;
-    box-shadow: 0 18px 46px rgba(0,0,0,0.85);
-    opacity: 0;
-  }
-  .fc-head {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 12px;
-  }
-  .fc-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    background: rgba(56, 189, 248, 0.2);
-    border: 2px solid #38bdf8;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-  }
-  .fc-title {
-    font-size: 23px;
-    font-weight: 900;
-    color: #bae6fd;
-    line-height: 1.2;
-  }
-  .fc-sub {
-    font-size: 17px;
-    font-weight: 600;
-    color: #cbd5e1;
-    line-height: 1.35;
-  }
-  .fc-grid-facts {
-    display: flex;
-    gap: 12px;
-    margin-top: 14px;
-  }
-  .fact-tag {
-    flex: 1;
-    background: rgba(15, 23, 42, 0.85);
-    border: 1.5px solid rgba(148, 163, 184, 0.35);
-    border-radius: 10px;
-    padding: 8px 10px;
-    text-align: center;
-    font-size: 15px;
-    font-weight: 700;
-    color: #f1f5f9;
-  }
-
-  /* Ground Marker View (Beat 5) */
-  #ground-marker-modal {
-    position: absolute;
-    inset: 0;
-    z-index: 25;
-    background:
-      radial-gradient(ellipse at 50% 50%, rgba(15, 23, 42, 0.82) 0%, rgba(6, 11, 20, 0.98) 100%);
-    opacity: 0;
-    transform: translateY(1280px);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    padding: 100px 32px 40px;
-  }
-  .marker-header {
-    text-align: center;
-    margin-bottom: 22px;
-  }
-  .marker-pill {
-    display: inline-block;
-    background: rgba(251, 191, 36, 0.2);
-    border: 1.5px solid #fbbf24;
-    color: #fde047;
-    padding: 6px 18px;
-    border-radius: 999px;
-    font-size: 16px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 10px;
-  }
-  .marker-title {
-    font-size: 34px;
-    font-weight: 900;
-    color: #ffffff;
-    text-shadow: 0 4px 16px rgba(0,0,0,0.8);
-  }
-  .marker-box {
-    width: 580px;
-    height: 580px;
-    border-radius: 30px;
-    background: #0f172a;
-    border: 3px solid rgba(251, 191, 36, 0.75);
-    box-shadow: 0 24px 60px rgba(0,0,0,0.85);
-    overflow: hidden;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  /* Outro Engagement View (Beat 6) */
-  #outro-container {
-    position: absolute;
-    inset: 0;
-    z-index: 28;
-    background: rgba(6, 11, 20, 0.92);
-    opacity: 0;
-    transform: translateY(1280px);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 130px 40px 40px;
-  }
-  .outro-title {
-    font-size: 36px;
-    font-weight: 900;
-    text-align: center;
-    color: #ffffff;
-    line-height: 1.25;
-    margin-bottom: 30px;
-    text-transform: uppercase;
-  }
-  .state-pick-grid {
-    width: 100%;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 35px;
-  }
-  .pick-card {
-    background: rgba(15, 23, 42, 0.92);
-    border: 2.5px solid rgba(255,255,255,0.2);
-    border-radius: 18px;
-    padding: 20px 16px;
-    text-align: center;
-    box-shadow: 0 12px 28px rgba(0,0,0,0.6);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-  }
-  .pick-emoji { font-size: 38px; }
-  .pick-name { font-size: 20px; font-weight: 800; color: #fff; }
-  .pick-num { font-size: 14px; font-weight: 700; color: #94a3b8; text-transform: uppercase; }
-
-  #cta-pill {
-    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-    color: #0f172a;
-    font-size: 24px;
-    font-weight: 900;
-    padding: 16px 36px;
-    border-radius: 999px;
-    box-shadow: 0 12px 34px rgba(245, 158, 11, 0.55);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    text-align: center;
-  }
-
-  /* Dynamic Karaoke Subtitle Box */
-  #subtitle-wrap {
-    position: absolute;
-    bottom: 95px;
-    left: 28px;
-    right: 28px;
-    z-index: 35;
-    pointer-events: none;
-    display: flex;
-    justify-content: center;
-  }
-  #subtitle-box {
-    background: rgba(6, 11, 20, 0.92);
-    border: 2px solid rgba(251, 191, 36, 0.7);
-    border-radius: 18px;
-    padding: 12px 24px;
-    box-shadow: 0 14px 40px rgba(0,0,0,0.85);
-    display: inline-flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    gap: 8px 10px;
-    max-width: 92%;
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  .sub-word {
-    font-size: 28px;
-    font-weight: 800;
-    color: #e2e8f0;
-    letter-spacing: -0.2px;
-    line-height: 1.25;
-    transition: transform 0.1s ease, color 0.1s ease;
-  }
-  .sub-word.active {
-    color: #fde047;
-    transform: scale(1.14);
-    text-shadow: 0 0 16px rgba(253, 224, 71, 0.8);
-  }
-</style>
+    /* Subtitle Container (Karaoke) */
+    .sub-container {
+      position: absolute;
+      bottom: 80px;
+      left: 36px;
+      right: 36px;
+      min-height: 85px;
+      background: rgba(2, 6, 14, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      padding: 16px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+      z-index: 30;
+      backdrop-filter: blur(12px);
+    }
+    .sub-text {
+      font-size: 26px;
+      font-weight: 800;
+      line-height: 1.35;
+      letter-spacing: 0.2px;
+    }
+    .w-norm { color: #D5E2F0; }
+    .w-act {
+      color: #FFE600;
+      text-shadow: 0 0 16px rgba(255, 230, 0, 0.8);
+      font-weight: 900;
+      display: inline-block;
+      transform: scale(1.08);
+      transition: transform 0.08s ease;
+    }
+  </style>
 </head>
 <body>
+  <div id="map"></div>
+  <div class="vignette"></div>
 
-<div id="map"></div>
-<div id="vignette"></div>
-
-<!-- SVG Vector Overlay for Lines, Rays & Converging Vectors -->
-<svg id="svg-overlay" style="position:absolute; inset:0; z-index:10; pointer-events:none; width:720px; height:1280px;">
-  <defs>
-    <filter id="glow-gold" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="6" result="blur" />
-      <feMerge>
-        <feMergeNode in="blur" />
-        <feMergeNode in="SourceGraphic" />
-      </feMerge>
-    </filter>
-    <marker id="arr-orange" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
-      <path d="M0,0 L0,6 L9,3 z" fill="#f97316"/>
-    </marker>
-    <marker id="arr-blue" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
-      <path d="M0,0 L0,6 L9,3 z" fill="#0ea5e9"/>
-    </marker>
-    <marker id="arr-green" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
-      <path d="M0,0 L0,6 L9,3 z" fill="#10b981"/>
-    </marker>
-    <marker id="arr-yellow" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
-      <path d="M0,0 L0,6 L9,3 z" fill="#eab308"/>
-    </marker>
-  </defs>
-
-  <!-- 4 Converging Border Rays -->
-  <line id="ray-az" x1="0" y1="0" x2="0" y2="0" stroke="#f97316" stroke-width="4.5" stroke-linecap="round" marker-end="url(#arr-orange)" opacity="0" filter="url(#glow-gold)"/>
-  <line id="ray-ut" x1="0" y1="0" x2="0" y2="0" stroke="#0ea5e9" stroke-width="4.5" stroke-linecap="round" marker-end="url(#arr-blue)" opacity="0" filter="url(#glow-gold)"/>
-  <line id="ray-co" x1="0" y1="0" x2="0" y2="0" stroke="#10b981" stroke-width="4.5" stroke-linecap="round" marker-end="url(#arr-green)" opacity="0" filter="url(#glow-gold)"/>
-  <line id="ray-nm" x1="0" y1="0" x2="0" y2="0" stroke="#eab308" stroke-width="4.5" stroke-linecap="round" marker-end="url(#arr-yellow)" opacity="0" filter="url(#glow-gold)"/>
-
-  <!-- Exact 90 Degree Angle Square Indicators (Beat 4) -->
-  <g id="angle-indicators" opacity="0">
-    <path d="M-22,0 L-22,-22 L0,-22" fill="none" stroke="#38bdf8" stroke-width="2.5" />
-    <path d="M22,0 L22,-22 L0,-22" fill="none" stroke="#34d399" stroke-width="2.5" />
-    <path d="M-22,0 L-22,22 L0,22" fill="none" stroke="#fb923c" stroke-width="2.5" />
-    <path d="M22,0 L22,22 L0,22" fill="none" stroke="#fde047" stroke-width="2.5" />
-  </g>
-
-  <!-- Intersection Target Reticle & Waves -->
-  <g id="target-group" opacity="0">
-    <circle id="target-pulse" cx="0" cy="0" r="28" fill="none" stroke="#fde047" stroke-width="3" opacity="0.8"/>
-    <circle id="target-ring" cx="0" cy="0" r="14" fill="none" stroke="#ffffff" stroke-width="2.5"/>
-    <line id="cross-h" x1="-36" y1="0" x2="36" y2="0" stroke="#fde047" stroke-width="2.5"/>
-    <line id="cross-v" x1="0" y1="-36" x2="0" y2="36" stroke="#fde047" stroke-width="2.5"/>
-  </g>
-</svg>
-
-<div id="overlay">
-  <!-- Dynamic Top Stage Badge -->
-  <div id="stage-badge">UNITED STATES</div>
-
-  <!-- Hook Title (Beat 1) -->
-  <div id="hook-wrap">
-    <div class="hook-pill">
-      STAND IN 4 US STATES<br>
-      <span class="hl-mark"><span class="hl-mark-bg" id="hook-hl-bg"></span>WITHOUT MOVING?!</span>
+  <!-- Top Header -->
+  <div class="top-header">
+    <div class="badge">
+      <div class="badge-dot"></div>
+      <span>GEOGRAPHY DISCOVERY</span>
     </div>
   </div>
 
-  <!-- 4 States Badge (Beat 1) -->
-  <div id="four-states-pill" class="floating-card">
-    <div class="pill-dots">
-      <span class="dot" style="background:#0ea5e9; color:#0ea5e9;"></span>
-      <span class="dot" style="background:#10b981; color:#10b981;"></span>
-      <span class="dot" style="background:#f97316; color:#f97316;"></span>
-      <span class="dot" style="background:#eab308; color:#eab308;"></span>
+  <!-- State Spotlight / Comparison HUD -->
+  <div class="hud-card" id="hudCard">
+    <div class="hud-title">
+      <span id="hudStateName">ALASKA</span>
+      <span style="font-size: 16px; color: #00F0FF; font-weight: 700;" id="hudRank">#1 LARGEST STATE</span>
     </div>
-    <div style="font-size:20px; font-weight:800; color:#fff;">4 STATES • 1 SPOT</div>
-  </div>
+    <div class="hud-stat" id="hudStatValue">665,384 SQ MI</div>
+    <div class="hud-sub" id="hudSubText">Massive land area spanning across 4 time zones</div>
 
-  <!-- Zero Steps Badge (Beat 1) -->
-  <div id="zero-step-pill" class="floating-card">
-    <div style="font-size:26px;">🦶❌</div>
-    <div>
-      <div style="font-size:20px; font-weight:800; color:#fca5a5;">0 STEPS TAKEN</div>
-      <div style="font-size:14px; font-weight:600; color:#cbd5e1;">All 4 at the exact same second</div>
-    </div>
-  </div>
-
-  <!-- Sounds Impossible Badge -->
-  <div id="impossible-badge">SOUNDS IMPOSSIBLE? 🤔</div>
-
-  <!-- Four Corners Monument Pin (Beat 2) -->
-  <div id="pin-monument" class="map-pin">
-    <div class="pin-chip" style="border-color:#fbbf24;">
-      <span style="font-size:24px;">🏛️</span>
-      <div>
-        <div style="font-size:21px; font-weight:900; color:#fef08a;">FOUR CORNERS MONUMENT</div>
-        <div style="font-size:14px; font-weight:700; color:#cbd5e1;">American Southwest • Navajo Nation</div>
+    <!-- 3 States Breakdown comparison -->
+    <div class="comp-box" id="compBox">
+      <div style="font-size: 13px; font-weight: 700; color: #FFE600; letter-spacing: 1px;">COMBINED 3-STATE AREA: 579,332 SQ MI</div>
+      <div class="comp-bars">
+        <div class="comp-bar-item">
+          <span class="bar-label" style="color: #FF5722;">Texas</span>
+          <div class="bar-track"><div class="bar-fill" style="width: 40.3%; background: #FF5722;"></div></div>
+          <span>268K</span>
+        </div>
+        <div class="comp-bar-item">
+          <span class="bar-label" style="color: #FFC107;">California</span>
+          <div class="bar-track"><div class="bar-fill" style="width: 24.6%; background: #FFC107;"></div></div>
+          <span>164K</span>
+        </div>
+        <div class="comp-bar-item">
+          <span class="bar-label" style="color: #4CAF50;">Montana</span>
+          <div class="bar-track"><div class="bar-fill" style="width: 22.1%; background: #4CAF50;"></div></div>
+          <span>147K</span>
+        </div>
       </div>
     </div>
-    <div class="pin-stem" style="height:22px; background:#fbbf24;"></div>
-    <div class="pin-dot"></div>
   </div>
 
-  <!-- State Badges (Beat 3) -->
-  <!-- Utah (Northwest) -->
-  <div id="badge-ut" class="state-badge" style="border:2.5px solid #0ea5e9;">
-    <span style="font-size:22px;">🏔️</span>
-    <span style="color:#7dd3fc;">UTAH</span>
-  </div>
-  <!-- Colorado (Northeast) -->
-  <div id="badge-co" class="state-badge" style="border:2.5px solid #10b981;">
-    <span style="font-size:22px;">🌲</span>
-    <span style="color:#6ee7b7;">COLORADO</span>
-  </div>
-  <!-- Arizona (Southwest) -->
-  <div id="badge-az" class="state-badge" style="border:2.5px solid #f97316;">
-    <span style="font-size:22px;">🏜️</span>
-    <span style="color:#fdba74;">ARIZONA</span>
-  </div>
-  <!-- New Mexico (Southeast) -->
-  <div id="badge-nm" class="state-badge" style="border:2.5px solid #eab308;">
-    <span style="font-size:22px;">🌶️</span>
-    <span style="color:#fde047;">NEW MEXICO</span>
-  </div>
-
-  <!-- Beat 4: Quadripoint Feature Card -->
-  <div id="quad-feature-card">
-    <div class="fc-head">
-      <div class="fc-icon">★</div>
-      <div>
-        <div class="fc-title">THE ONLY US QUADRIPOINT</div>
-        <div class="fc-sub">The single point where 4 state borders meet</div>
-      </div>
+  <!-- Coastline Spotlight -->
+  <div class="coast-card" id="coastCard">
+    <div class="hud-title" style="color: #00F0FF;">
+      <span>MASSIVE COASTLINE</span>
+      <span style="font-size: 16px; color: #FFF;">🌊 PACIFIC & ARCTIC</span>
     </div>
-    <div class="fc-grid-facts">
-      <div class="fact-tag" style="border-color:#38bdf8; color:#bae6fd;">📐 Exact 90° Angles</div>
-      <div class="fact-tag" style="border-color:#fde047; color:#fef08a;">🧭 Lat 37°N • Long 109°W</div>
+    <div class="hud-stat">6,640 MILES</div>
+    <div class="hud-sub" style="color: #E0F7FA; font-size: 16px;">
+      More coastline than all other 49 US states <strong>combined</strong> (approx. 6,000 miles)!
     </div>
   </div>
-</div>
 
-<!-- Beat 5: Ultra-Crisp Ground Marker Bronze Disk Replica Modal -->
-<div id="ground-marker-modal">
-  <div class="marker-header">
-    <div class="marker-pill">THE OFFICIAL GROUND MARKER</div>
-    <div class="marker-title">Stand in 4 States at Once!</div>
-  </div>
-  <div class="marker-box">
-    <svg width="580" height="580" viewBox="0 0 580 580">
-      <defs>
-        <!-- Radial metal gradient for plaza granite -->
-        <radialGradient id="graniteGrad" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="#334155"/>
-          <stop offset="70%" stop-color="#1e293b"/>
-          <stop offset="100%" stop-color="#0f172a"/>
-        </radialGradient>
-        <!-- Bronze disc gradient -->
-        <radialGradient id="bronzeGrad" cx="45%" cy="40%" r="55%">
-          <stop offset="0%" stop-color="#fef08a"/>
-          <stop offset="25%" stop-color="#eab308"/>
-          <stop offset="65%" stop-color="#ca8a04"/>
-          <stop offset="90%" stop-color="#854d0e"/>
-          <stop offset="100%" stop-color="#713f12"/>
-        </radialGradient>
-        <radialGradient id="centerGem" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="#ffffff"/>
-          <stop offset="40%" stop-color="#fef08a"/>
-          <stop offset="100%" stop-color="#b45309"/>
-        </radialGradient>
-      </defs>
+  <!-- Center Callout Pill -->
+  <div class="callout-pill" id="calloutPill">⚡ ALASKA IS 2.5X BIGGER!</div>
 
-      <!-- Granite Plaza Disc -->
-      <circle cx="290" cy="290" r="275" fill="url(#graniteGrad)" stroke="#64748b" stroke-width="4"/>
-
-      <!-- 4 Colored Quadrant Sectors -->
-      <!-- Utah: Top-Left (NW) -->
-      <path d="M290,290 L35,290 A255,255 0 0,1 290,35 Z" fill="#0ea5e9" fill-opacity="0.22" stroke="#0ea5e9" stroke-width="3"/>
-      <!-- Colorado: Top-Right (NE) -->
-      <path d="M290,290 L290,35 A255,255 0 0,1 545,290 Z" fill="#10b981" fill-opacity="0.22" stroke="#10b981" stroke-width="3"/>
-      <!-- New Mexico: Bottom-Right (SE) -->
-      <path d="M290,290 L545,290 A255,255 0 0,1 290,545 Z" fill="#eab308" fill-opacity="0.22" stroke="#eab308" stroke-width="3"/>
-      <!-- Arizona: Bottom-Left (SW) -->
-      <path d="M290,290 L290,545 A255,255 0 0,1 35,290 Z" fill="#f97316" fill-opacity="0.22" stroke="#f97316" stroke-width="3"/>
-
-      <!-- State Inscriptions on Plaza -->
-      <!-- Utah -->
-      <text x="175" y="185" fill="#7dd3fc" font-size="28" font-weight="900" text-anchor="middle" font-family="Montserrat">UTAH</text>
-      <!-- Colorado -->
-      <text x="405" y="185" fill="#6ee7b7" font-size="28" font-weight="900" text-anchor="middle" font-family="Montserrat">COLORADO</text>
-      <!-- Arizona -->
-      <text x="175" y="415" fill="#fdba74" font-size="28" font-weight="900" text-anchor="middle" font-family="Montserrat">ARIZONA</text>
-      <!-- New Mexico -->
-      <text x="405" y="415" fill="#fde047" font-size="28" font-weight="900" text-anchor="middle" font-family="Montserrat">NEW MEXICO</text>
-
-      <!-- Center Bronze Marker -->
-      <circle cx="290" cy="290" r="115" fill="url(#bronzeGrad)" stroke="#fbbf24" stroke-width="5" filter="drop-shadow(0 10px 24px rgba(0,0,0,0.8))"/>
-      <circle cx="290" cy="290" r="95" fill="none" stroke="#713f12" stroke-width="2" stroke-dasharray="6 4"/>
-
-      <!-- Crossing Lines on Bronze Disc -->
-      <line x1="175" y1="290" x2="405" y2="290" stroke="#713f12" stroke-width="4"/>
-      <line x1="290" y1="175" x2="290" y2="405" stroke="#713f12" stroke-width="4"/>
-
-      <!-- Inscription along circle -->
-      <path id="circleTextPath" d="M205,290 A85,85 0 1,1 375,290 A85,85 0 1,1 205,290" fill="none"/>
-      <text fill="#451a03" font-size="11" font-weight="900" letter-spacing="1.5">
-        <textPath href="#circleTextPath" startOffset="50%" text-anchor="middle">
-          FOUR STATES HERE MEET IN COMMON CORNER
-        </textPath>
-      </text>
-
-      <!-- Center Gold Spot -->
-      <circle cx="290" cy="290" r="14" fill="url(#centerGem)" stroke="#fff" stroke-width="3"/>
-
-      <!-- 4 Footprint outlines showing 1 person touching all 4 states! -->
-      <g id="feet-group" opacity="0.95">
-        <!-- Hand/Foot 1 (Utah) -->
-        <ellipse cx="265" cy="265" rx="14" ry="9" fill="#0ea5e9" transform="rotate(-45 265 265)" stroke="#fff" stroke-width="2"/>
-        <!-- Hand/Foot 2 (Colorado) -->
-        <ellipse cx="315" cy="265" rx="14" ry="9" fill="#10b981" transform="rotate(45 315 265)" stroke="#fff" stroke-width="2"/>
-        <!-- Hand/Foot 3 (New Mexico) -->
-        <ellipse cx="315" cy="315" rx="14" ry="9" fill="#eab308" transform="rotate(-45 315 315)" stroke="#fff" stroke-width="2"/>
-        <!-- Hand/Foot 4 (Arizona) -->
-        <ellipse cx="265" cy="315" rx="14" ry="9" fill="#f97316" transform="rotate(45 265 315)" stroke="#fff" stroke-width="2"/>
-      </g>
-    </svg>
-  </div>
-</div>
-
-<!-- Beat 6: Outro Engagement Selector -->
-<div id="outro-container">
-  <div class="outro-title">Which state would you stand in first?</div>
-  <div class="state-pick-grid">
-    <div class="pick-card" style="border-color:#f97316;">
-      <span class="pick-emoji">🏜️</span>
-      <span class="pick-name">Arizona</span>
-      <span class="pick-num">Option 1</span>
+  <!-- Outro Poll -->
+  <div class="outro-poll" id="outroPoll">
+    <div class="poll-q">Did you think Alaska was this big?</div>
+    <div class="poll-opt winner">
+      <span>🤯 Mind Blown!</span>
+      <span>84%</span>
     </div>
-    <div class="pick-card" style="border-color:#0ea5e9;">
-      <span class="pick-emoji">🏔️</span>
-      <span class="pick-name">Utah</span>
-      <span class="pick-num">Option 2</span>
-    </div>
-    <div class="pick-card" style="border-color:#10b981;">
-      <span class="pick-emoji">🌲</span>
-      <span class="pick-name">Colorado</span>
-      <span class="pick-num">Option 3</span>
-    </div>
-    <div class="pick-card" style="border-color:#eab308;">
-      <span class="pick-emoji">🌶️</span>
-      <span class="pick-name">New Mexico</span>
-      <span class="pick-num">Option 4</span>
+    <div class="poll-opt">
+      <span>🧠 Yes, already knew it</span>
+      <span>16%</span>
     </div>
   </div>
-  <div id="cta-pill">Drop Your Pick in Comments! 👇</div>
-</div>
 
-<!-- Dynamic Karaoke Subtitle Box -->
-<div id="subtitle-wrap">
-  <div id="subtitle-box"></div>
-</div>
+  <!-- Subtitle Bar -->
+  <div class="sub-container">
+    <div class="sub-text" id="subText"></div>
+  </div>
 
-<script>
-const easeOut = t => 1 - Math.pow(1 - Math.max(0, Math.min(1, t)), 3);
-const easeInOut = t => { t = Math.max(0, Math.min(1, t)); return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2; };
-const clamp01 = v => Math.max(0, Math.min(1, v));
-const lerp = (a, b, t) => a + (b - a) * clamp01(t);
-const prog = (t, s, e) => clamp01((t - s) / Math.max(0.0001, e - s));
+  <script src="maplibre-gl.js"></script>
+  <script src="states_data.js"></script>
+  <script>
+    window.__READY = false;
 
-function createStripePattern(color, bgAlpha) {
-  const size = 24;
-  const c = document.createElement('canvas');
-  c.width = size; c.height = size;
-  const ctx = c.getContext('2d');
-  ctx.fillStyle = color.replace('1)', `${bgAlpha})`);
-  ctx.fillRect(0, 0, size, size);
-  ctx.strokeStyle = color.replace('1)', '0.45)');
-  ctx.lineWidth = 4;
-  ctx.beginPath();
-  ctx.moveTo(-4, size + 4); ctx.lineTo(size + 4, -4);
-  ctx.moveTo(-4, 4); ctx.lineTo(4, -4);
-  ctx.moveTo(size - 4, size + 4); ctx.lineTo(size + 4, size - 4);
-  ctx.stroke();
-  return ctx.getImageData(0, 0, size, size);
-}
-
-// MapLibre Initialization
-const map = new maplibregl.Map({
-  container: 'map',
-  preserveDrawingBuffer: true,
-  attributionControl: false,
-  fadeDuration: 0,
-  style: {
-    version: 8,
-    sources: {
-      esri: {
-        type: 'raster',
-        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
-        tileSize: 256
-      }
-    },
-    layers: [
-      { id: 'esri-sat', type: 'raster', source: 'esri' }
-    ]
-  },
-  center: [-98.5, 39.5],
-  zoom: 3.2,
-  pitch: 25,
-  bearing: -6
-});
-
-let READY = false;
-
-map.on('error', e => console.error('MapLibre error:', e));
-
-map.on('load', () => {
-  try {
-    console.log('map load event fired!');
-
-    map.addImage('stripe-az', createStripePattern('rgba(249, 115, 22, 1)', 0.28));
-    map.addImage('stripe-ut', createStripePattern('rgba(14, 165, 233, 1)', 0.28));
-    map.addImage('stripe-co', createStripePattern('rgba(16, 185, 129, 1)', 0.28));
-    map.addImage('stripe-nm', createStripePattern('rgba(234, 179, 8, 1)', 0.28));
-
-    // Add US Mainland Base Borders
-    map.addSource('us-mainland-src', { type: 'geojson', data: window.GEO_US_MAINLAND });
-    map.addLayer({
-      id: 'us-mainland-line',
-      type: 'line',
-      source: 'us-mainland-src',
-      paint: {
-        'line-color': '#94a3b8',
-        'line-width': 1.6,
-        'line-opacity': 0.4
-      }
+    // Dark styled raster satellite basemap
+    const map = new maplibregl.Map({
+      container: 'map',
+      style: {
+        version: 8,
+        sources: {
+          'satellite': {
+            type: 'raster',
+            tiles: [
+              'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+            ],
+            tileSize: 256
+          }
+        },
+        layers: [
+          {
+            id: 'satellite-layer',
+            type: 'raster',
+            source: 'satellite',
+            paint: {
+              'raster-brightness-max': 0.85,
+              'raster-contrast': 0.15,
+              'raster-saturation': -0.15
+            }
+          }
+        ]
+      },
+      center: [-152.0, 64.0],
+      zoom: 3.4,
+      pitch: 20,
+      bearing: 0,
+      interactive: false
     });
 
-    // Four Individual States Sources & Layers
-    const statesCfg = [
-      { id: 'az', src: window.GEO_AZ, pat: 'stripe-az', color: '#f97316', glow: '#fb923c' },
-      { id: 'ut', src: window.GEO_UT, pat: 'stripe-ut', color: '#0ea5e9', glow: '#38bdf8' },
-      { id: 'co', src: window.GEO_CO, pat: 'stripe-co', color: '#10b981', glow: '#34d399' },
-      { id: 'nm', src: window.GEO_NM, pat: 'stripe-nm', color: '#eab308', glow: '#fde047' }
+    map.on('load', () => {
+      // Add US States GeoJSON
+      map.addSource('states', {
+        type: 'geojson',
+        data: window.STATES_GEOJSON
+      });
+
+      // Individual state fills
+      map.addLayer({
+        id: 'states-fill',
+        type: 'fill',
+        source: 'states',
+        paint: {
+          'fill-color': ['get', 'color'],
+          'fill-opacity': 0.45
+        }
+      });
+
+      // Neon state borders
+      map.addLayer({
+        id: 'states-line',
+        type: 'line',
+        source: 'states',
+        paint: {
+          'line-color': ['get', 'color'],
+          'line-width': 4,
+          'line-opacity': 0.95
+        }
+      });
+
+      // Glowing outer halo
+      map.addLayer({
+        id: 'states-glow',
+        type: 'line',
+        source: 'states',
+        paint: {
+          'line-color': ['get', 'color'],
+          'line-width': 12,
+          'line-opacity': 0.35,
+          'line-blur': 6
+        }
+      });
+
+      window.__READY = true;
+      console.log('Alaska Scale MapLibre ready!');
+    });
+
+    // Camera Keyframes interpolation helper
+    const keyframes = [
+      { t: 0.0,  lng: -152.0, lat: 64.0, z: 3.4, p: 20, b: -5 },
+      { t: 3.4,  lng: -152.0, lat: 64.0, z: 3.4, p: 20, b: -5 },
+      { t: 5.5,  lng: -99.5,  lat: 31.5, z: 4.8, p: 28, b: 10 },  // Zoom to Texas
+      { t: 7.8,  lng: -125.0, lat: 48.0, z: 2.6, p: 15, b: 0 },   // Zoom out continental
+      { t: 9.0,  lng: -152.0, lat: 64.0, z: 3.4, p: 22, b: -5 },  // Back to Alaska
+      { t: 15.0, lng: -152.0, lat: 64.0, z: 3.4, p: 22, b: -5 },
+      { t: 18.0, lng: -108.0, lat: 39.0, z: 3.8, p: 24, b: 5 },   // Lower 48 for TX, CA, MT
+      { t: 23.0, lng: -108.0, lat: 39.0, z: 3.8, p: 24, b: 5 },
+      { t: 25.5, lng: -152.0, lat: 64.0, z: 3.3, p: 20, b: -3 },  // Alaska Comparison
+      { t: 30.0, lng: -152.0, lat: 62.0, z: 3.6, p: 30, b: 12 },  // Coastline angle
+      { t: 34.0, lng: -152.0, lat: 62.0, z: 3.6, p: 30, b: 12 },
+      { t: 36.1, lng: -152.0, lat: 62.0, z: 3.2, p: 15, b: 0 }
     ];
 
-    statesCfg.forEach(cfg => {
-      map.addSource(`${cfg.id}-src`, { type: 'geojson', data: cfg.src });
-
-      map.addLayer({
-        id: `${cfg.id}-fill`,
-        type: 'fill',
-        source: `${cfg.id}-src`,
-        paint: {
-          'fill-pattern': cfg.pat,
-          'fill-opacity': 0
+    function getCameraAt(t) {
+      if (t <= keyframes[0].t) return keyframes[0];
+      if (t >= keyframes[keyframes.length - 1].t) return keyframes[keyframes.length - 1];
+      for (let i = 0; i < keyframes.length - 1; i++) {
+        const k1 = keyframes[i];
+        const k2 = keyframes[i + 1];
+        if (t >= k1.t && t <= k2.t) {
+          const ratio = (t - k1.t) / (k2.t - k1.t);
+          // Ease in-out
+          const ease = ratio < 0.5 ? 2 * ratio * ratio : -1 + (4 - 2 * ratio) * ratio;
+          return {
+            lng: k1.lng + (k2.lng - k1.lng) * ease,
+            lat: k1.lat + (k2.lat - k1.lat) * ease,
+            z: k1.z + (k2.z - k1.z) * ease,
+            p: k1.p + (k2.p - k1.p) * ease,
+            b: k1.b + (k2.b - k1.b) * ease
+          };
         }
-      });
-
-      map.addLayer({
-        id: `${cfg.id}-glow`,
-        type: 'line',
-        source: `${cfg.id}-src`,
-        paint: {
-          'line-color': cfg.glow,
-          'line-width': 12,
-          'line-blur': 6,
-          'line-opacity': 0
-        }
-      });
-
-      map.addLayer({
-        id: `${cfg.id}-line`,
-        type: 'line',
-        source: `${cfg.id}-src`,
-        paint: {
-          'line-color': cfg.color,
-          'line-width': 3.5,
-          'line-opacity': 0
-        }
-      });
-    });
-
-    console.log('All layers added!');
-    READY = true;
-    window.__READY = true;
-  } catch (err) {
-    console.error('Error in map on load:', err);
-  }
-});
-
-// Camera Timeline
-function cameraForTime(t) {
-  const keys = [
-    { t: 0.0,  lon: -98.5,     lat: 39.5,     z: 3.25, p: 25, b: -6  },
-    { t: 5.5,  lon: -100.0,    lat: 38.5,     z: 3.65, p: 28, b: -8  },
-    { t: 8.5,  lon: -109.045,  lat: 36.999,   z: 5.80, p: 44, b: -12 },
-    { t: 15.0, lon: -109.045,  lat: 36.999,   z: 6.85, p: 46, b: 6   },
-    { t: 21.5, lon: -109.0452, lat: 36.9990,  z: 8.20, p: 50, b: 24  },
-    { t: 28.0, lon: -109.0452, lat: 36.9990,  z: 11.2, p: 55, b: 35  },
-    { t: 33.0, lon: -109.0452, lat: 36.9990,  z: 7.20, p: 42, b: -10 },
-    { t: 36.3, lon: -109.0452, lat: 36.9990,  z: 6.80, p: 38, b: -5  }
-  ];
-
-  if (t <= keys[0].t) return keys[0];
-  if (t >= keys[keys.length - 1].t) return keys[keys.length - 1];
-
-  let i = 0;
-  while (i < keys.length - 1 && keys[i + 1].t < t) i++;
-  const k1 = keys[i], k2 = keys[i + 1];
-  const p = easeInOut(prog(t, k1.t, k2.t));
-
-  return {
-    lon: lerp(k1.lon, k2.lon, p),
-    lat: lerp(k1.lat, k2.lat, p),
-    z:   lerp(k1.z,   k2.z,   p),
-    p:   lerp(k1.p,   k2.p,   p),
-    b:   lerp(k1.b,   k2.b,   p)
-  };
-}
-
-// Subtitles renderer
-const subBox = document.getElementById('subtitle-box');
-let curChunkIdx = -1;
-
-function updateSubtitles(t) {
-  const chunks = window.SUB_CHUNKS || [];
-  let foundIdx = -1;
-  for (let i = 0; i < chunks.length; i++) {
-    if (t >= chunks[i].start && t <= chunks[i].end) {
-      foundIdx = i;
-      break;
-    }
-  }
-
-  if (foundIdx === -1) {
-    subBox.style.opacity = '0';
-    curChunkIdx = -1;
-    return;
-  }
-
-  if (foundIdx !== curChunkIdx) {
-    curChunkIdx = foundIdx;
-    const c = chunks[foundIdx];
-    subBox.innerHTML = c.words.map((w, idx) => `<span class="sub-word" id="sw-${idx}">${w.t}</span>`).join(' ');
-    subBox.style.opacity = '1';
-    subBox.style.transform = 'translateY(0)';
-  }
-
-  const c = chunks[foundIdx];
-  c.words.forEach((w, idx) => {
-    const el = document.getElementById(`sw-${idx}`);
-    if (el) {
-      if (t >= w.s && t <= w.e) {
-        el.classList.add('active');
-      } else {
-        el.classList.remove('active');
       }
-    }
-  });
-}
-
-// Core deterministic render function
-window.renderAt = function(t) {
-  if (!READY) return;
-
-  const cam = cameraForTime(t);
-  map.jumpTo({
-    center: [cam.lon, cam.lat],
-    zoom: cam.z,
-    pitch: cam.p,
-    bearing: cam.b
-  });
-
-  // Top Stage Badge Text & Fade
-  const stageBadge = document.getElementById('stage-badge');
-  let badgeTxt = 'UNITED STATES';
-  let badgeAlpha = 0;
-
-  if (t < 7.6) {
-    badgeTxt = '🇺🇸 UNITED STATES';
-    badgeAlpha = easeOut(prog(t, 0.2, 0.8));
-    if (t > 7.0) badgeAlpha = 1 - prog(t, 7.0, 7.6);
-  } else if (t < 15.2) {
-    badgeTxt = '📍 AMERICAN SOUTHWEST';
-    badgeAlpha = easeOut(prog(t, 7.8, 8.4));
-    if (t > 14.6) badgeAlpha = 1 - prog(t, 14.6, 15.2);
-  } else if (t < 21.8) {
-    badgeTxt = '⚡ 4 STATES MEETING POINT';
-    badgeAlpha = easeOut(prog(t, 15.4, 16.0));
-    if (t > 21.2) badgeAlpha = 1 - prog(t, 21.2, 21.8);
-  } else if (t < 28.2) {
-    badgeTxt = '★ THE ONLY US QUADRIPOINT';
-    badgeAlpha = easeOut(prog(t, 22.0, 22.6));
-    if (t > 27.6) badgeAlpha = 1 - prog(t, 27.6, 28.2);
-  } else {
-    // Hide stage badge during full-screen ground marker modal & outro
-    badgeAlpha = 0;
-  }
-  stageBadge.innerText = badgeTxt;
-  stageBadge.style.opacity = badgeAlpha;
-
-  // Beat 1: Hook Title (0.2s - 6.0s)
-  const hookWrap = document.getElementById('hook-wrap');
-  if (t >= 0.2 && t <= 5.8) {
-    const a = easeOut(prog(t, 0.2, 0.8));
-    const outA = t > 5.2 ? (1 - prog(t, 5.2, 5.8)) : 1;
-    hookWrap.style.opacity = a * outA;
-    hookWrap.style.transform = `translateY(${lerp(-16, 0, a)}px) scale(${lerp(0.94, 1, a)})`;
-  } else {
-    hookWrap.style.opacity = '0';
-  }
-
-  // 4 States Pill (2.3s - 5.5s)
-  const fourStatesPill = document.getElementById('four-states-pill');
-  if (t >= 2.3 && t <= 5.5) {
-    const a = easeOut(prog(t, 2.3, 2.7));
-    const outA = t > 5.0 ? (1 - prog(t, 5.0, 5.5)) : 1;
-    fourStatesPill.style.opacity = a * outA;
-    fourStatesPill.style.transform = `translateX(-50%) scale(${lerp(0.9, 1, a)})`;
-  } else {
-    fourStatesPill.style.opacity = '0';
-  }
-
-  // Zero Step Pill (3.9s - 5.8s)
-  const zeroStepPill = document.getElementById('zero-step-pill');
-  if (t >= 3.9 && t <= 5.8) {
-    const a = easeOut(prog(t, 3.9, 4.3));
-    const outA = t > 5.3 ? (1 - prog(t, 5.3, 5.8)) : 1;
-    zeroStepPill.style.opacity = a * outA;
-    zeroStepPill.style.transform = `translateX(-50%) scale(${lerp(0.9, 1, a)})`;
-  } else {
-    zeroStepPill.style.opacity = '0';
-  }
-
-  // Impossible Badge (6.2s - 7.6s)
-  const impBadge = document.getElementById('impossible-badge');
-  if (t >= 6.2 && t <= 7.6) {
-    const a = easeOut(prog(t, 6.2, 6.5));
-    const outA = t > 7.1 ? (1 - prog(t, 7.1, 7.6)) : 1;
-    impBadge.style.opacity = a * outA;
-    impBadge.style.transform = `translateX(-50%) scale(${lerp(0.85, 1, a)})`;
-  } else {
-    impBadge.style.opacity = '0';
-  }
-
-  // Four Corners Monument Pin (Beat 2: 11.2s - 15.2s)
-  const pinMon = document.getElementById('pin-monument');
-  const monCoord = [-109.0452, 36.9990];
-  const monPx = map.project(monCoord);
-  pinMon.style.left = `${monPx.x}px`;
-  pinMon.style.top = `${monPx.y}px`;
-
-  if (t >= 11.2 && t <= 15.2) {
-    const a = easeOut(prog(t, 11.2, 11.8));
-    const outA = t > 14.6 ? (1 - prog(t, 14.6, 15.2)) : 1;
-    pinMon.style.opacity = a * outA;
-  } else {
-    pinMon.style.opacity = '0';
-  }
-
-  // State Fill & Line Opacity Controller
-  // In Beat 1 (2.3s - 5.5s), all 4 states pulse lightly
-  // In Beat 3 (16.68s+), each state turns on in sync with words!
-  let opAZ = 0, opUT = 0, opCO = 0, opNM = 0;
-
-  if (t >= 2.3 && t <= 5.5) {
-    const flash = 0.55 * Math.sin(prog(t, 2.3, 5.5) * Math.PI);
-    opAZ = flash; opUT = flash; opCO = flash; opNM = flash;
-  } else if (t >= 16.0) {
-    // Arizona: 16.68s
-    if (t >= 16.68) opAZ = easeOut(prog(t, 16.68, 17.2));
-    // Utah: 17.50s
-    if (t >= 17.50) opUT = easeOut(prog(t, 17.50, 17.9));
-    // Colorado: 18.02s
-    if (t >= 18.02) opCO = easeOut(prog(t, 18.02, 18.5));
-    // New Mexico: 18.82s
-    if (t >= 18.82) opNM = easeOut(prog(t, 18.82, 19.4));
-  }
-
-  map.setPaintProperty('az-fill', 'fill-opacity', opAZ * 0.7);
-  map.setPaintProperty('az-line', 'line-opacity', opAZ);
-  map.setPaintProperty('az-glow', 'line-opacity', opAZ * 0.85);
-
-  map.setPaintProperty('ut-fill', 'fill-opacity', opUT * 0.7);
-  map.setPaintProperty('ut-line', 'line-opacity', opUT);
-  map.setPaintProperty('ut-glow', 'line-opacity', opUT * 0.85);
-
-  map.setPaintProperty('co-fill', 'fill-opacity', opCO * 0.7);
-  map.setPaintProperty('co-line', 'line-opacity', opCO);
-  map.setPaintProperty('co-glow', 'line-opacity', opCO * 0.85);
-
-  map.setPaintProperty('nm-fill', 'fill-opacity', opNM * 0.7);
-  map.setPaintProperty('nm-line', 'line-opacity', opNM);
-  map.setPaintProperty('nm-glow', 'line-opacity', opNM * 0.85);
-
-  // State Badges Positioning and Visibility (Beat 3: 16.5s - 22.0s)
-  const badgeUT = document.getElementById('badge-ut');
-  const badgeCO = document.getElementById('badge-co');
-  const badgeAZ = document.getElementById('badge-az');
-  const badgeNM = document.getElementById('badge-nm');
-
-  const utPos = map.project([-109.85, 37.85]);
-  const coPos = map.project([-108.25, 37.85]);
-  const azPos = map.project([-109.85, 36.15]);
-  const nmPos = map.project([-108.25, 36.15]);
-
-  badgeUT.style.left = `${utPos.x}px`; badgeUT.style.top = `${utPos.y}px`;
-  badgeCO.style.left = `${coPos.x}px`; badgeCO.style.top = `${coPos.y}px`;
-  badgeAZ.style.left = `${azPos.x}px`; badgeAZ.style.top = `${azPos.y}px`;
-  badgeNM.style.left = `${nmPos.x}px`; badgeNM.style.top = `${nmPos.y}px`;
-
-  const badgeOut = t > 21.4 ? (1 - prog(t, 21.4, 22.0)) : 1;
-  badgeAZ.style.opacity = (t >= 16.68 && t <= 22.0) ? easeOut(prog(t, 16.68, 17.1)) * badgeOut : 0;
-  badgeUT.style.opacity = (t >= 17.50 && t <= 22.0) ? easeOut(prog(t, 17.50, 17.8)) * badgeOut : 0;
-  badgeCO.style.opacity = (t >= 18.02 && t <= 22.0) ? easeOut(prog(t, 18.02, 18.4)) * badgeOut : 0;
-  badgeNM.style.opacity = (t >= 18.82 && t <= 22.0) ? easeOut(prog(t, 18.82, 19.3)) * badgeOut : 0;
-
-  // Converging Rays into Center (19.8s - 22.0s)
-  const rayAZ = document.getElementById('ray-az');
-  const rayUT = document.getElementById('ray-ut');
-  const rayCO = document.getElementById('ray-co');
-  const rayNM = document.getElementById('ray-nm');
-  const targetGrp = document.getElementById('target-group');
-
-  if (t >= 19.8 && t <= 22.0) {
-    const rProg = easeOut(prog(t, 19.8, 20.6));
-    const rOut = t > 21.4 ? (1 - prog(t, 21.4, 22.0)) : 1;
-    const alpha = rProg * rOut;
-
-    targetGrp.setAttribute('opacity', alpha);
-    targetGrp.setAttribute('transform', `translate(${monPx.x}, ${monPx.y})`);
-
-    // Target Pulse scale
-    const pScale = 1 + 0.35 * Math.sin((t - 19.8) * 12);
-    document.getElementById('target-pulse').setAttribute('r', 28 * pScale);
-
-    // Dynamic ray endpoints
-    function setRay(rayEl, startPx) {
-      rayEl.setAttribute('x1', startPx.x);
-      rayEl.setAttribute('y1', startPx.y);
-      const curX = lerp(startPx.x, monPx.x, rProg);
-      const curY = lerp(startPx.y, monPx.y, rProg);
-      rayEl.setAttribute('x2', curX);
-      rayEl.setAttribute('y2', curY);
-      rayEl.setAttribute('opacity', alpha);
+      return keyframes[0];
     }
 
-    setRay(rayAZ, azPos);
-    setRay(rayUT, utPos);
-    setRay(rayCO, coPos);
-    setRay(rayNM, nmPos);
-  } else {
-    targetGrp.setAttribute('opacity', '0');
-    rayAZ.setAttribute('opacity', '0');
-    rayUT.setAttribute('opacity', '0');
-    rayCO.setAttribute('opacity', '0');
-    rayNM.setAttribute('opacity', '0');
-  }
+    // Main synchronous render function for headless capture
+    window.renderAt = function(t) {
+      // 1. Update Map Camera
+      const cam = getCameraAt(t);
+      map.jumpTo({
+        center: [cam.lng, cam.lat],
+        zoom: cam.z,
+        pitch: cam.p,
+        bearing: cam.b
+      });
 
-  // Beat 4: The Only Quadripoint Feature Card & 90 Degree Angle Indicators (22.0s - 28.0s)
-  const featCard = document.getElementById('quad-feature-card');
-  const angleInd = document.getElementById('angle-indicators');
+      // 2. HUD Element Visibility & Content Control
+      const hudCard = document.getElementById('hudCard');
+      const hudStateName = document.getElementById('hudStateName');
+      const hudRank = document.getElementById('hudRank');
+      const hudStatValue = document.getElementById('hudStatValue');
+      const hudSubText = document.getElementById('hudSubText');
+      const compBox = document.getElementById('compBox');
+      const calloutPill = document.getElementById('calloutPill');
+      const coastCard = document.getElementById('coastCard');
+      const outroPoll = document.getElementById('outroPoll');
 
-  if (t >= 22.0 && t <= 28.0) {
-    const a = easeOut(prog(t, 22.0, 22.6));
-    const outA = t > 27.4 ? (1 - prog(t, 27.4, 28.0)) : 1;
-    featCard.style.opacity = a * outA;
-    featCard.style.transform = `translateY(${lerp(-18, 0, a)}px)`;
+      // Default HUD state: Alaska
+      if (t < 3.4) {
+        hudCard.style.display = 'block';
+        coastCard.style.display = 'none';
+        calloutPill.style.display = 'none';
+        compBox.style.display = 'none';
+        outroPoll.style.display = 'none';
+        hudStateName.innerText = 'ALASKA';
+        hudStateName.style.color = '#00F0FF';
+        hudRank.innerText = '#1 LARGEST STATE';
+        hudStatValue.innerText = '665,384 SQ MI';
+        hudSubText.innerText = 'Massive land area spanning across 4 time zones';
+      } else if (t >= 3.4 && t < 7.8) {
+        // Texas comparison
+        hudCard.style.display = 'block';
+        coastCard.style.display = 'none';
+        hudStateName.innerText = 'TEXAS';
+        hudStateName.style.color = '#FF5722';
+        hudRank.innerText = '#2 LARGEST STATE';
+        hudStatValue.innerText = '268,596 SQ MI';
+        hudSubText.innerText = 'Famous for its size, but dwarfs in comparison';
+        if (t >= 5.5) {
+          calloutPill.style.display = 'block';
+        } else {
+          calloutPill.style.display = 'none';
+        }
+      } else if (t >= 7.8 && t < 15.0) {
+        // Back to Alaska scale
+        hudCard.style.display = 'block';
+        coastCard.style.display = 'none';
+        calloutPill.style.display = 'none';
+        compBox.style.display = 'none';
+        hudStateName.innerText = 'ALASKA';
+        hudStateName.style.color = '#00F0FF';
+        hudRank.innerText = 'LARGEST IN USA';
+        hudStatValue.innerText = '665,000+ SQ MI';
+        hudSubText.innerText = '17.5% of the entire land area of the United States!';
+      } else if (t >= 15.0 && t < 28.0) {
+        // Crazy 3-state combo: Texas + California + Montana
+        hudCard.style.display = 'block';
+        coastCard.style.display = 'none';
+        calloutPill.style.display = 'none';
+        compBox.style.display = 'block';
+        hudStateName.innerText = 'TX + CA + MT';
+        hudStateName.style.color = '#FFE600';
+        hudRank.innerText = '3 STATES COMBINED';
+        hudStatValue.innerText = '579,332 SQ MI';
+        hudSubText.innerText = 'Alaska is STILL +86,052 sq miles larger!';
+      } else if (t >= 28.0 && t < 33.5) {
+        // Coastline spotlight
+        hudCard.style.display = 'none';
+        coastCard.style.display = 'block';
+        calloutPill.style.display = 'none';
+        outroPoll.style.display = 'none';
+      } else if (t >= 33.5) {
+        // Outro Poll
+        hudCard.style.display = 'none';
+        coastCard.style.display = 'none';
+        calloutPill.style.display = 'none';
+        outroPoll.style.display = 'block';
+      }
 
-    angleInd.setAttribute('opacity', a * outA);
-    angleInd.setAttribute('transform', `translate(${monPx.x}, ${monPx.y})`);
-  } else {
-    featCard.style.opacity = '0';
-    angleInd.setAttribute('opacity', '0');
-  }
-
-  // Beat 5: Ground Marker Modal (28.2s - 33.0s)
-  const markerModal = document.getElementById('ground-marker-modal');
-  if (t >= 28.2 && t <= 33.0) {
-    const a = easeOut(prog(t, 28.2, 28.9));
-    const outA = t > 32.4 ? (1 - prog(t, 32.4, 33.0)) : 1;
-    markerModal.style.opacity = a * outA;
-    markerModal.style.transform = `translateY(${lerp(1280, 0, a)}px)`;
-  } else {
-    markerModal.style.opacity = '0';
-    markerModal.style.transform = 'translateY(1280px)';
-  }
-
-  // Beat 6: Outro Engagement Selector (33.0s - 36.3s)
-  const outro = document.getElementById('outro-container');
-  if (t >= 33.0) {
-    const a = easeOut(prog(t, 33.0, 33.6));
-    outro.style.opacity = a;
-    outro.style.transform = `translateY(${lerp(1280, 0, a)}px)`;
-  } else {
-    outro.style.opacity = '0';
-    outro.style.transform = 'translateY(1280px)';
-  }
-
-  // Update dynamic karaoke subtitles
-  updateSubtitles(t);
-};
-</script>
+      // 3. Subtitles & Karaoke Word Highlight
+      const subEl = document.getElementById('subText');
+      if (window.SUB_CHUNKS) {
+        const curChunk = window.SUB_CHUNKS.find(c => t >= c.start && t <= c.end);
+        if (curChunk) {
+          let html = '';
+          curChunk.words.forEach(w => {
+            const isAct = (t >= w.s && t <= w.e);
+            html += `<span class="${isAct ? 'w-act' : 'w-norm'}">${w.w}</span> `;
+          });
+          subEl.innerHTML = html;
+        } else {
+          subEl.innerHTML = '';
+        }
+      }
+    };
+  </script>
 </body>
 </html>
