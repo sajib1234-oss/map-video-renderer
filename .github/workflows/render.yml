@@ -1,0 +1,59 @@
+name: Cloud Map Video Renderer
+
+on:
+  workflow_dispatch:
+    inputs:
+      video_title:
+        description: 'Output Video Name'
+        required: false
+        default: 'map_explainer_video'
+  push:
+    branches: [ main ]
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install System Dependencies (Chromium, FFmpeg, Xvfb)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg chromium-browser xvfb fonts-dejavu-core fonts-noto-color-emoji
+
+      - name: Install Node & Python Libraries
+        run: |
+          npm install
+          pip install requests
+
+      - name: Build Synchronized Audio & SFX
+        run: |
+          python3 build_audio.py
+
+      - name: Render Map Video Frames in Headless Chromium
+        run: |
+          xvfb-run -a -s "-screen 0 720x1280x24" node render_runner.js
+
+      - name: Assemble Final High-Quality MP4 Video
+        run: |
+          ffmpeg -y -framerate 30 -i frames/frame_%04d.jpg -i final_audio.m4a \
+            -c:v libx264 -preset fast -crf 18 -pix_fmt yuv420p \
+            -c:a aac -b:a 192k -shortest output_video.mp4
+
+      - name: Upload Video Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.inputs.video_title || 'map_video' }}
+          path: output_video.mp4
+          retention-days: 14
